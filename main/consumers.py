@@ -60,7 +60,7 @@ class VideoChatConsumer(WebsocketConsumer):
       }))
       
     elif data['action'] == 'GPT_help' and self.room_group_name == data['for_group']:
-      system_message = 'Please help this conversation? Whether the last message is a question to you or whether you are called upon to just be included in the conversation. Messages in this conversation will be wrapped in HTML div elements. The class "message lc" will be the first peer, "message rc" will be the second peer and "message gpt" will be what you have responded previously in the conversation. You do not have to format yoir response this way, your response should just be plain text. !gpt at the beginning of a message is a prompt to call upon you.';
+      system_message = 'Please help this conversation? Messages input to you in this conversation will be wrapped in HTML div elements. The class "message lc" will be the first peer, "message rc" will be the second peer and "message gpt" will be what you have responded previously in the conversation. Your output should just be plain text, no HTML whatsoever as I will handle this. !gpt at the beginning of a message is a prompt to call upon you, just to clarify in case of confusion.'
       messages = [
             {'role': 'system', 'content': system_message},
             {'role': 'user', 'content': data['prompt']}
