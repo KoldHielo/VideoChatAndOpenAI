@@ -6,4 +6,4 @@ sqlparse==0.4.2
 whitenoise==6.2.0
 openai==0.28.0
 daphne==4.0.0
-django-channels==0.7.0
+channels==4.0.0

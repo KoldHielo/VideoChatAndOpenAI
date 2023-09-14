@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+        
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: Arial;
+            }
+            
+            body {
+                background-color: #738388;
+            }
+            
+            #streams {
+                display: flex;
+                justify-content: space-between;
+                margin: 50px auto;
+            }
+            
+            #streams video {
+                width: 30%;
+                background-color: black;
+                border-radius: 20%;
+                height: 100%;
+            }
+            
+            #local-stream {
+                transform: scaleX(-1);
+            }
+            
+            #messages {
+                border: 2px solid white;
+                margin: 0 auto;
+                height: 450px;
+                overflow-y: scroll;
+                padding: 10px 30px;
+                border-radius: 10%;
+            }
+            
+            #streams, #messages, #message-form {
+                width: 80%;
+                max-width: 450px;
+            }
+            
+            .message {
+                text-align: center;
+                margin: 15px auto;
+                letter-spacing: 1px;
+            }
+            
+            .message.lc::before {
+                content: 'Me: ';
+                color: navy;
+            }
+            
+            .message.rc::before {
+                content: 'Peer: ';
+                color: darkred;
+            }
+            
+            .message.gpt::before {
+                content: 'GPT 3.5: ';
+                color: white;
+            }
+            
+            #message-form {
+                margin: 20px auto;
+            }
+            
+            #message-form * {
+                display: block;
+                margin: 0 auto;
+            }
+            
+            #message-input {
+                width: 80%;
+                height: 100px;
+                margin-bottom: 20px;
+            }
+            
+            #message-button {
+                padding: 3px 8px;
+                background-color: lightgreen;
+                border: 2px solid black;
+                border-radius: 30%;
+            }
+        </style>
+    </head>
+    <body>
+        <section id="streams">
+            <video id="local-stream" muted autoplay playsinline></video>
+            <video id="remote-stream" autoplay playsinline></video>
+        </section>
+        <section id="messages">
+            
+        </section>
+        <form id="message-form">
+            <textarea id="message-input"></textarea>
+            <button id="message-button" type="button">Send</button>
+        </form>
+        <script>
+        (async () => {
+             let roomName = null;
+             let role = null;
+            //Video Init
+            let localStream = document.querySelector('#local-stream');
+            let remoteStream = document.querySelector('#remote-stream');
+            const messages = document.querySelector('#messages');
+            const messageForm = document.querySelector('#message-form');
+            const messageInput = document.querySelector('#message-input');
+            const messageButton = document.querySelector('#message-button');
+            
+            
+            let localVideo = await navigator.mediaDevices.getUserMedia(
+                {
+                    video: true,
+                    audio: true
+                }
+                );
+            localStream.srcObject = localVideo;
+                
+            let remoteVideo = new MediaStream();
+            remoteStream.srcObject = remoteVideo;
+            
+            //WebRTC Init
+            const servers = {
+              iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
+              ]
+            };
+            
+            let lc = new RTCPeerConnection(servers);
+            
+            let candidateCheck = 'not_initiated';
+            
+            lc.addEventListener('icecandidate', e => {
+                candidateCheck = e.candidate;
+            })
+            
+            //Adding and receiving video tracks
+            
+            localVideo.getTracks().forEach(track => {
+                lc.addTrack(track, localVideo);
+            })
+            
+            lc.addEventListener('track', e => {
+                e.streams[0].getTracks().forEach(track => {
+                    remoteVideo.addTrack(track, remoteVideo);
+                })
+            })
+            
+            //WebSocket Init
+            const wsUrl = `wss://${window.location.host}/ws/VideoChat`;
+            const ws = new WebSocket(wsUrl);
+            
+            ws.addEventListener('open', e => {
+                roomName = prompt('Please name the room you would like to create/join?');
+                ws.send(JSON.stringify({
+                    'action': 'join_room',
+                    'room_name': roomName
+                }));
+            });
+            
+            ws.addEventListener('message', e => {
+                const data = JSON.parse(e.data);
+                if('role' in data) {
+                    switch(data.role) {
+                        case 'full':
+                            roomName = prompt('The room that you have requested is already at capacity. Please try another room');
+                            ws.send(JSON.stringify({
+                                'action': 'join_room',
+                                'room_name': roomName
+                            }));
+                            break;
+                        case 'offerer':
+                            const dc = lc.createDataChannel(roomName);
+                            dc.addEventListener('open', e => {
+                                messageButton.type = 'submit';
+                            });
+                            dc.addEventListener('message', e => {
+                                const messageDiv = document.createElement('div');
+                                messageDiv.setAttribute('class', 'message rc');
+                                messageDiv.innerHTML = e.data;
+                                messages.appendChild(messageDiv);
+                                messages.scrollTo(0, messages.scrollHeight);
+                            });
+                            messageForm.addEventListener('submit', e => {
+                                e.preventDefault();
+                                const messageDiv = document.createElement('div');
+                                messageDiv.setAttribute('class', 'message lc');
+                                messageDiv.innerHTML = messageInput.value;
+                                dc.send(messageInput.value);
+                                messages.appendChild(messageDiv);
+                                messages.scrollTo(0, messages.scrollHeight);
+                                if(messageInput.value.split(' ')[0] == '!gpt') {
+                                    let prompt = messages.innerHTML;
+                                    ws.send(JSON.stringify({
+                                        'action': 'GPT_help',
+                                        'for_group': roomName,
+                                        'prompt': prompt
+                                    }));
+                                }
+                                messageForm.reset();
+                            });
+                            role = 'offerer';
+                            lc.createOffer()
+                            .then(o => lc.setLocalDescription(o))
+                            .then(async o => {
+                                alert('Gathering ICE candidates. Please do not share your room name until a completion message appears...');
+                                await iceCandidatesGathered();
+                                alert('ICE candidate gathering completed!');
+                                ws.send(JSON.stringify({
+                                    'action': 'store_offerer_SDP',
+                                    'for_group': roomName,
+                                    'offerer_SDP': lc.localDescription
+                                }));
+                            });
+                            break;
+                        case 'answerer':
+                            lc.addEventListener('datachannel', e => {
+                                lc.dc = e.channel;
+                                lc.dc.addEventListener('open', e => {
+                                    messageButton.type = 'submit';
+                                });
+                                lc.dc.addEventListener('message', e => {
+                                    const messageDiv = document.createElement('div');
+                                    messageDiv.setAttribute('class', 'message rc');
+                                    messageDiv.innerHTML = e.data;
+                                    messages.appendChild(messageDiv);
+                                    messages.scrollTo(0, messages.scrollHeight);
+                                });
+                                messageForm.addEventListener('submit', e => {
+                                    e.preventDefault();
+                                    const messageDiv = document.createElement('div');
+                                    messageDiv.setAttribute('class', 'message lc');
+                                    messageDiv.innerHTML = messageInput.value;
+                                    lc.dc.send(messageInput.value);
+                                    messages.appendChild(messageDiv);
+                                    messages.scrollTo(0, messages.scrollHeight);
+                                    if(messageInput.value.split(' ')[0] == '!gpt') {
+                                        
+                                        let prompt = messages.innerHTML;
+                                        ws.send(JSON.stringify({
+                                            'action': 'GPT_help',
+                                            'for_group': roomName,
+                                            'prompt': prompt
+                                        }));
+                                    }
+                                    messageForm.reset();
+                                })
+                            });
+                            role = 'answerer';
+                            ws.send(JSON.stringify({
+                                'action': 'get_offerer_SDP',
+                                'for_group': roomName
+                            }));
+                            break;
+                    }
+                }
+                if('offerer_SDP' in data && role == 'answerer') {
+                    lc.setRemoteDescription(data['offerer_SDP']);
+                    lc.createAnswer()
+                    .then(a => lc.setLocalDescription(a))
+                    .then(async a => {
+                        alert('Gathering ICE candidates...');
+                        await iceCandidatesGathered();
+                        alert('ICE candidate gathering complete! You will now be connected');
+                      
+                        ws.send(JSON.stringify({
+                            'action': 'send_answerer_SDP',
+                            'for_group': roomName,
+                            'answerer_SDP': lc.localDescription
+                        }));
+                    })
+                }
+                
+                if('answerer_SDP' in data && role == 'offerer') {
+                    lc.setRemoteDescription(data['answerer_SDP']);
+                }
+                
+                if('gpt_message' in data) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.setAttribute('class', 'message gpt');
+                    messageDiv.innerHTML = data['gpt_message'];
+                    messages.appendChild(messageDiv);
+                    messages.scrollTo(0, messages.scrollHeight);
+                }
+            });
+            
+            let iceCandidatesGathered = () => {
+                return new Promise((resolve, reject) => {
+                    let candidateInterval = setInterval(() => {
+                        if(candidateCheck == null) {
+                            resolve();
+                            clearInterval(candidateInterval);
+                        }
+                    }, 1000);
+                })
+            }
+            
+        })()
+        </script>
+    </body>
+</html>
