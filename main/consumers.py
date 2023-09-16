@@ -60,7 +60,7 @@ class VideoChatConsumer(WebsocketConsumer):
       }))
       
     elif data['action'] == 'GPT_help' and self.room_group_name == data['for_group']:
-      system_message = 'You are a helpful assistant.'
+      system_message = 'You are a helpful assistant. Format your responses in HTML.'
       messages = [
             {'role': 'system', 'content': system_message}
           ]
