@@ -208,7 +208,7 @@
                                 e.preventDefault();
                                 const messageDiv = document.createElement('div');
                                 messageDiv.setAttribute('class', 'message lc');
-                                let msg = messageInput.value.replace('\n', '<br>'),
+                                let msg = messageInput.value.replace('\n', '<br>');
                                 messageDiv.innerHTML = msg;
                                 dc.send(msg);
                                 messages.appendChild(messageDiv);
