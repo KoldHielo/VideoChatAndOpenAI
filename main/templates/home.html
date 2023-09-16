@@ -208,7 +208,7 @@
                                 e.preventDefault();
                                 const messageDiv = document.createElement('div');
                                 messageDiv.setAttribute('class', 'message lc');
-                                let msg = messageInput.value.replace('\n', '<br>');
+                                let msg = messageInput.value.replaceAll('\n', '<br>');
                                 messageDiv.innerHTML = msg;
                                 dc.send(msg);
                                 messages.appendChild(messageDiv);
@@ -218,13 +218,13 @@
                                     messages.querySelectorAll('.message').forEach(message => {
                                         switch(message.className) {
                                             case 'message lc':
-                                                prompts.push({'user': 'user-1', 'content': message.innerHTML.replace('<br>', '\n')});
+                                                prompts.push({'user': 'user-1', 'content': message.innerHTML.replaceAll('<br>', '\n')});
                                                 break;
                                             case 'message rc':
-                                                prompts.push({'user': 'user-2', 'content': message.innerHTML.replace('<br>', '\n')});
+                                                prompts.push({'user': 'user-2', 'content': message.innerHTML.replaceAll('<br>', '\n')});
                                                 break;
                                             case 'message gpt':
-                                                prompts.push({'user': 'assistant', 'content': message.innerHTML.replace('<br>', '\n')});
+                                                prompts.push({'user': 'assistant', 'content': message.innerHTML.replaceAll('<br>', '\n')});
                                                 break;
                                         }
                                     });
@@ -267,24 +267,23 @@
                                     e.preventDefault();
                                     const messageDiv = document.createElement('div');
                                     messageDiv.setAttribute('class', 'message lc');
-                                    let msg = messageInput.value.replace('\n', '<br>');
+                                    let msg = messageInput.value.replaceAll('\n', '<br>');
                                     messageDiv.innerHTML = msg;
                                     lc.dc.send(msg);
                                     messages.appendChild(messageDiv);
                                     messages.scrollTo(0, messages.scrollHeight);
                                     if(messageInput.value.split(' ')[0] == '!gpt') {
-                                        
                                         let prompts = [];
                                         messages.querySelectorAll('.message').forEach(message => {
                                             switch(message.className) {
                                                 case 'message lc':
-                                                    prompts.push({'user': 'user-1', 'content': message.innerHTML.replace('<br>', '\n')});
+                                                    prompts.push({'user': 'user-1', 'content': message.innerHTML.replaceAll('<br>', '\n')});
                                                     break;
                                                 case 'message rc':
-                                                    prompts.push({'user': 'user-2', 'content': message.innerHTML.replace('<br>', '\n')});
+                                                    prompts.push({'user': 'user-2', 'content': message.innerHTML.replaceAll('<br>', '\n')});
                                                     break;
                                                 case 'message gpt':
-                                                    prompts.push({'user': 'assistant', 'content': message.innerHTML.replace('<br>', '\n')});
+                                                    prompts.push({'user': 'assistant', 'content': message.innerHTML.replaceAll('<br>', '\n')});
                                                     break;
                                             }
                                         });
