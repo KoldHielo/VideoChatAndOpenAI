@@ -60,7 +60,7 @@ class VideoChatConsumer(WebsocketConsumer):
       }))
       
     elif data['action'] == 'GPT_help' and self.room_group_name == data['for_group']:
-      system_message = 'You are a helpful assistant. Format your responses in HTML.'
+      system_message = 'You are a helpful assistant.'
       messages = [
             {'role': 'system', 'content': system_message}
           ]
@@ -81,6 +81,7 @@ class VideoChatConsumer(WebsocketConsumer):
             messages=messages
           )
       gpt_message = response['choices'][0]['message']['content']
+      gpt_message = gpt_message.replace('\n', '<br>')
       async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
