@@ -64,16 +64,16 @@ class VideoChatConsumer(WebsocketConsumer):
       messages = [
             {'role': 'system', 'content': system_message}
           ]
-      for message in data['prompt']:
+      for message in data['prompts']:
         if message['user'] == 'user-1':
           role = 'user'
-          content = f'User 1: {data["message"]}'
+          content = f'User 1: {message["content"]}'
         elif message['user'] == 'user-2':
           role = 'user'
-          content = f'User 2: {data["message"]}'
+          content = f'User 2: {message["content"]}'
         elif message['user'] == 'assistant':
           role = 'assistant'
-          content = data['message']
+          content = message['content']
         messages.append({'role': role, 'content': content})
           
       response = openai.ChatCompletion.create(
