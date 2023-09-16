@@ -213,11 +213,24 @@
                                 messages.appendChild(messageDiv);
                                 messages.scrollTo(0, messages.scrollHeight);
                                 if(messageInput.value.split(' ')[0] == '!gpt') {
-                                    let prompt = messages.innerHTML;
+                                    let prompts = [];
+                                    messages.querySelectorAll('.message').forEach(message => {
+                                        switch(message.className) {
+                                            case 'message lc':
+                                                prompts.push({'user': 'user-1', 'content': message.innerHTML});
+                                                break;
+                                            case 'message rc':
+                                                prompts.push({'user': 'user-2', 'content': message.innerHTML});
+                                                break;
+                                            case 'message gpt':
+                                                prompts.push({'user': 'assistant', 'content': message.innerHTML});
+                                                break;
+                                        }
+                                    });
                                     ws.send(JSON.stringify({
                                         'action': 'GPT_help',
                                         'for_group': roomName,
-                                        'prompt': prompt
+                                        'prompts': prompts
                                     }));
                                 }
                                 messageForm.reset();
@@ -259,11 +272,24 @@
                                     messages.scrollTo(0, messages.scrollHeight);
                                     if(messageInput.value.split(' ')[0] == '!gpt') {
                                         
-                                        let prompt = messages.innerHTML;
+                                        let prompts = [];
+                                        messages.querySelectorAll('.message').forEach(message => {
+                                            switch(message.className) {
+                                                case 'message lc':
+                                                    prompts.push({'user': 'user-1', 'content': message.innerHTML});
+                                                    break;
+                                                case 'message rc':
+                                                    prompts.push({'user': 'user-2', 'content': message.innerHTML});
+                                                    break;
+                                                case 'message gpt':
+                                                    prompts.push({'user': 'assistant', 'content': message.innerHTML});
+                                                    break;
+                                            }
+                                        });
                                         ws.send(JSON.stringify({
                                             'action': 'GPT_help',
                                             'for_group': roomName,
-                                            'prompt': prompt
+                                            'prompts': prompts
                                         }));
                                     }
                                     messageForm.reset();
