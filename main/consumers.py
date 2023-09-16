@@ -60,11 +60,22 @@ class VideoChatConsumer(WebsocketConsumer):
       }))
       
     elif data['action'] == 'GPT_help' and self.room_group_name == data['for_group']:
-      system_message = 'Please help this conversation? Messages input to you in this conversation will be wrapped in HTML div elements. The class "message lc" will be the first peer, "message rc" will be the second peer and "message gpt" will be what you have responded previously in the conversation. Your output should just be plain text, no HTML whatsoever as I will handle this. !gpt at the beginning of a message is a prompt to call upon you, just to clarify in case of confusion.'
+      system_message = 'You are a helpful assistant.'
       messages = [
-            {'role': 'system', 'content': system_message},
-            {'role': 'user', 'content': data['prompt']}
+            {'role': 'system', 'content': system_message}
           ]
+      for message in data['prompt']:
+        if message['user'] == 'user-1':
+          role = 'user'
+          content = f'User 1: {data["message"]}'
+        elif message['user'] == 'user-2':
+          role = 'user'
+          content = f'User 2: {data["message"]}'
+        elif message['user'] == 'assistant':
+          role = 'assistant'
+          content = data['message']
+        messages.append({'role': role, 'content': content})
+          
       response = openai.ChatCompletion.create(
             model='gpt-3.5-turbo',
             messages=messages
