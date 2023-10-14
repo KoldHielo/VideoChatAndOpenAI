@@ -90,7 +90,8 @@ CHANNEL_LAYERS = {
     'CONFIG': {
         'hosts': [
             ('127.0.0.1', 6379, 0)
-        ]
+        ],
+        'password': os.environ['REDIS_PASS']
     }
   }
 }
@@ -100,7 +101,8 @@ CACHES = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/',
     'OPTIONS': {
-        'CLIENT_CLASS': 'django_redis.client.DefaultClient'
+        'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        'PASSWORD': os.environ['REDIS_PASS']
     }
   }
 }
