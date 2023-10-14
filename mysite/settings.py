@@ -30,6 +30,10 @@ ALLOWED_HOSTS = [
     'kieranoldfield.co.uk'
 ]
 
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
+
 # FORM SUBMISSION
 # Comment out the following line and place your railway URL, and your production URL in the array.
 CSRF_TRUSTED_ORIGINS = [
@@ -49,9 +53,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -92,8 +98,11 @@ CHANNEL_LAYERS = {
 
 CACHES = {
   'default': {
-    'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-    'LOCATION': 'video_cache'
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/',
+    'OPTIONS': {
+        'CLIENT_CLASS': 'django_redis.client.DefaultClient'
+    }
   }
 }
 
