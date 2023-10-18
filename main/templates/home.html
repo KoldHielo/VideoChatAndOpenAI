@@ -142,38 +142,16 @@
             const servers = {
                 iceServers: [
                     {
-                        urls: "stun:stun.relay.metered.ca:80",
+                        urls: "stun:stun.kieranoldfield.co.uk:5349",
                     },
                     {
-                        urls: "turn:a.relay.metered.ca:80",
-                        username: "e4491b4eb453e9120ef29606",
-                        credential: "VGm2KerXKAESQXrx",
-                    },
-                    {
-                        urls: "turn:a.relay.metered.ca:80?transport=tcp",
-                        username: "e4491b4eb453e9120ef29606",
-                        credential: "VGm2KerXKAESQXrx",
-                    },
-                    {
-                        urls: "turn:a.relay.metered.ca:443",
-                        username: "e4491b4eb453e9120ef29606",
-                        credential: "VGm2KerXKAESQXrx",
-                    },
-                    {
-                        urls: "turn:a.relay.metered.ca:443?transport=tcp",
-                        username: "e4491b4eb453e9120ef29606",
-                        credential: "VGm2KerXKAESQXrx",
-                    },
-                ],
+                        urls: "turn:turn.kieranoldfield.co.uk:5349",
+                        username: "koldhielo",
+                        credential: "koldhielo",
+                    }
+                ]
             }
-            /*
-            const servers = {
-              iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
-              ]
-            };
-            */
+            
             
             let lc = new RTCPeerConnection(servers);
             
