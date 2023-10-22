@@ -58,7 +58,7 @@ class VideoChatConsumer(WebsocketConsumer):
       self.send(json.dumps({
           'offerer_SDP': offerer_SDP
       }))
-      
+
     elif data['action'] == 'GPT_help' and self.room_group_name == data['for_group']:
       system_message = 'You are a helpful assistant.'
       messages = [
@@ -75,7 +75,7 @@ class VideoChatConsumer(WebsocketConsumer):
           role = 'assistant'
           content = message['content']
         messages.append({'role': role, 'content': content})
-          
+
       response = openai.ChatCompletion.create(
             model='gpt-3.5-turbo',
             messages=messages
@@ -89,14 +89,23 @@ class VideoChatConsumer(WebsocketConsumer):
                 'gpt_message': gpt_message
             }
           )
-      
-          
-      
+
+  def disconnect(self, close_code):
+    async_to_sync(self.channel_layer.group_discard)(
+      self.room_group_name,
+      self.channel_name
+    )
+    quantity = cache.get(f'{self.room_group_name}-quantity')
+    if quantity == 2:
+      cache.set(f'{self.room_group_name}-quantity', 1)
+    elif quantity == 1:
+      cache.delete(f'{self.room_group_name}-quantity')
+
   def send_answer(self, event):
     self.send(json.dumps({
         'answerer_SDP': event['answerer_SDP']
     }))
-    
+
   def send_gpt_message(self, event):
     self.send(json.dumps({
         'gpt_message': event['gpt_message']
