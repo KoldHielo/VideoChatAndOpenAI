@@ -155,6 +155,12 @@
             
             let lc = new RTCPeerConnection(servers);
             
+            let candidateCheck = 'not_initiated';
+            
+            lc.addEventListener('icecandidate', e => {
+                candidateCheck = e.candidate;
+            })
+            
             //Adding and receiving video tracks
             
             localVideo.getTracks().forEach(track => {
@@ -177,14 +183,6 @@
                     'action': 'join_room',
                     'room_name': roomName
                 }));
-                lc.addEventListener('icecandidate', e => {
-                    ws.send(JSON.stringify({
-                        'action': 'candidate_exchange',
-                        'for_group': roomName,
-                        'role': role,
-                        'candidate': e.candidate
-                    }))
-                })
             });
             
             ws.addEventListener('message', e => {
@@ -245,13 +243,15 @@
                             role = 'offerer';
                             lc.createOffer()
                             .then(o => lc.setLocalDescription(o))
-                            .then(o => {
+                            .then(async o => {
+                                alert('Gathering ICE candidates. Please do not share your room name until a completion message appears...');
+                                await iceCandidatesGathered();
+                                alert('ICE candidate gathering completed!');
                                 ws.send(JSON.stringify({
-                                'action': 'store_offerer_SDP',
-                                'offerer_SDP': lc.localDescription,
-                                'for_group': roomName
-                                }))
-                                alert(`Room set to ${roomName}. Please wait for remote peer to join the room`)
+                                    'action': 'store_offerer_SDP',
+                                    'for_group': roomName,
+                                    'offerer_SDP': lc.localDescription
+                                }));
                             });
                             break;
                         case 'answerer':
@@ -302,7 +302,7 @@
                             });
                             role = 'answerer';
                             ws.send(JSON.stringify({
-                                'action': 'get_offerer_candidates',
+                                'action': 'get_offerer_SDP',
                                 'for_group': roomName
                             }));
                             break;
@@ -313,6 +313,10 @@
                     lc.createAnswer()
                     .then(a => lc.setLocalDescription(a))
                     .then(async a => {
+                        alert('Gathering ICE candidates...');
+                        await iceCandidatesGathered();
+                        alert('ICE candidate gathering complete! You will now be connected');
+                      
                         ws.send(JSON.stringify({
                             'action': 'send_answerer_SDP',
                             'for_group': roomName,
@@ -325,12 +329,6 @@
                     lc.setRemoteDescription(data['answerer_SDP']);
                 }
                 
-                if('candidates' in data && role == data['for']) {
-                    for(candidate of data['candidates']) {
-                lc.addIceCandidate(candidate);
-              }
-                }
-                
                 if('gpt_message' in data) {
                     const messageDiv = document.createElement('div');
                     messageDiv.setAttribute('class', 'message gpt');
@@ -339,6 +337,17 @@
                     messages.scrollTo(0, messages.scrollHeight);
                 }
             });
+            
+            let iceCandidatesGathered = () => {
+                return new Promise((resolve, reject) => {
+                    let candidateInterval = setInterval(() => {
+                        if(candidateCheck == null) {
+                            resolve();
+                            clearInterval(candidateInterval);
+                        }
+                    }, 1000);
+                })
+            }
             
         })()
         </script>
