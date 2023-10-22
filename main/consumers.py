@@ -94,8 +94,8 @@ class VideoChatConsumer(WebsocketConsumer):
               {
                 'type': 'send_candidates',
                 'for': 'answerer',
-                'candidates': candidates,
-                'offerer_SDP': sdp,
+                'candidates': json.loads(candidates),
+                'offerer_SDP': json.loads(sdp),
                 'for_group': self.room_group_name
               }
             )
