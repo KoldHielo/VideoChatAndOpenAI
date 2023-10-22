@@ -326,9 +326,9 @@
                 }
                 
                 if('candidates' in data && role == data['for']) {
-                    data['candidates'].forEach(candidate => {
-                        lc.addIceCandidate(candidate);
-                    })
+                    for(candidate of data['candidates']) {
+                lc.addIceCandidate(candidate);
+              }
                 }
                 
                 if('gpt_message' in data) {
