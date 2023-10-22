@@ -15,6 +15,7 @@ class VideoChatConsumer(WebsocketConsumer):
     data = json.loads(text_data)
     if data['action'] == 'join_room':
       self.room_group_name = data['room_name']
+      print(data['room_name'], self.room_group_name)
       quantity = cache.get(f'{self.room_group_name}-quantity')
       if quantity == None:
         cache.set(f'{self.room_group_name}-quantity', 1)
@@ -42,75 +43,22 @@ class VideoChatConsumer(WebsocketConsumer):
           'role': 'full',
           'room': None
         }))
-    
-    elif data['action'] == 'candidate_exchange' and self.room_group_name == data['for_group']:
-      room_capacity = cache.get(f'{self.room_group_name}-quantity')
-      if data['role'] == 'offerer':
-        if room_capacity == 2:
-          candidates = cache.get(f'{self.room_group_name}-offerer-candidates')
-          if candidates is not None:
-            candidates = json.loads(candidates)
-            candidates.append(data['candidate'])
-            cache.delete(f'{self.room_group_name}-offerer-candidates')
-          else:
-            candidates = [data['candidate']]
-          async_to_sync(self.channel_layer.group_send)(
-              self.room_group_name,
-              {
-                'type': 'send_candidates',
-                'for': 'answerer',
-                'candidates': candidates,
-                'for_group': self.room_group_name
-              }
-            )
-        else:
-          key_name = f'{self.room_group_name}-offerer-candidates'
-          candidates = cache.get(key_name)
-          if candidates == None:
-            value = json.dumps([data['candidate']])
-            cache.set(key_name, value)
-          else:
-            candidates = json.loads(candidates)
-            candidates.append(data['candidate'])
-            value = json.dumps(candidates)
-            cache.set(key_name, value)
-      elif data['role'] == 'answerer':
-        if room_capacity == 2:
-          async_to_sync(self.channel_layer.group_send)(
-              self.room_group_name,
-              {
-                'type': 'send_candidates',
-                'for': 'offerer',
-                'candidates': [data['candidate']],
-                'for_group': self.room_group_name
-              }
-            )
-    elif data['action'] == 'get_offerer_candidates' and self.room_group_name == data['for_group']:
-      sdp = cache.get(f'{self.room_group_name}-offerer-SDP')
-      candidates = cache.get(f'{self.room_group_name}-offerer-candidates')
-      if candidates is not None:
-        async_to_sync(self.channel_layer.group_send)(
-              self.room_group_name,
-              {
-                'type': 'send_candidates',
-                'for': 'answerer',
-                'candidates': json.loads(candidates),
-                'offerer_SDP': json.loads(sdp),
-                'for_group': self.room_group_name
-              }
-            )
-        cache.delete(f'{self.room_group_name}-offerer-candidates')
-        cache.delete(f'{self.room_group_name}-offerer-SDP')
     elif data['action'] == 'store_offerer_SDP' and self.room_group_name == data['for_group']:
-      cache.set(f'{self.room_group_name}-offerer-SDP', data['offerer_SDP'])
-    elif data['action'] == 'send_answerer_SDP' and data['for_group'] == self.room_group_name:
+      cache.set(f'{self.room_group_name}-offerer_SDP', data['offerer_SDP'])
+    elif data['action'] == 'send_answerer_SDP' and self.room_group_name == data['for_group']:
       async_to_sync(self.channel_layer.group_send)(
-          self.room_group_name,
-          {
-              'type': 'send_candidates',
-              'answerer_SDP': data['answerer_SDP']
-          }
+            self.room_group_name,
+            {
+                'type': 'send_answer',
+                'answerer_SDP': data['answerer_SDP']
+            }
           )
+    elif data['action'] == 'get_offerer_SDP' and self.room_group_name == data['for_group']:
+      offerer_SDP = cache.get(f'{self.room_group_name}-offerer_SDP')
+      self.send(json.dumps({
+          'offerer_SDP': offerer_SDP
+      }))
+      
     elif data['action'] == 'GPT_help' and self.room_group_name == data['for_group']:
       system_message = 'You are a helpful assistant.'
       messages = [
@@ -141,20 +89,13 @@ class VideoChatConsumer(WebsocketConsumer):
                 'gpt_message': gpt_message
             }
           )
-
-  def disconnect(self, close_code):
-    async_to_sync(self.channel_layer.group_discard)(
-      self.room_group_name,
-      self.channel_name
-    )
-    quantity = cache.get(f'{self.room_group_name}-quantity')
-    if quantity == 2:
-      cache.set(f'{self.room_group_name}-quantity', 1)
-    elif quantity == 1:
-      cache.delete(f'{self.room_group_name}-quantity')
       
-  def send_candidates(self, event):
-    self.send(json.dumps(event))
+          
+      
+  def send_answer(self, event):
+    self.send(json.dumps({
+        'answerer_SDP': event['answerer_SDP']
+    }))
     
   def send_gpt_message(self, event):
     self.send(json.dumps({
