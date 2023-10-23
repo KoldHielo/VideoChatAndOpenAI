@@ -89,7 +89,20 @@ class VideoChatConsumer(WebsocketConsumer):
                 'gpt_message': gpt_message
             }
           )
-
+    elif data['action'] == 'DALLE' and self.room_group_name == data['for_group']:
+      response = openai.Image.create(
+            prompt=data['prompt'],
+            n=1,
+            size='256x256'
+          )
+          img_tag = f'<img src="{response['data'][0]['url']}" alt="Generated Image">'
+      async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'send_gpt_message',
+                'gpt_message': img_tag
+            }
+          )
   def disconnect(self, close_code):
     async_to_sync(self.channel_layer.group_discard)(
       self.room_group_name,
