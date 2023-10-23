@@ -95,7 +95,7 @@ class VideoChatConsumer(WebsocketConsumer):
             n=1,
             size='256x256'
           )
-          img_tag = f'<img src="{response['data'][0]['url']}" alt="Generated Image">'
+      img_tag = f'<img src="{response['data'][0]['url']}" alt="Generated Image">'
       async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
