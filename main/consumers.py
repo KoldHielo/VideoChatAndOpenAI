@@ -76,12 +76,15 @@ class VideoChatConsumer(WebsocketConsumer):
           content = message['content']
         messages.append({'role': role, 'content': content})
 
-      response = openai.ChatCompletion.create(
-            model='gpt-3.5-turbo',
-            messages=messages
-          )
-      gpt_message = response['choices'][0]['message']['content']
-      gpt_message = gpt_message.replace('\n', '<br>')
+      try:
+        response = openai.ChatCompletion.create(
+              model='gpt-3.5-turbo',
+              messages=messages
+            )
+        gpt_message = response['choices'][0]['message']['content']
+        gpt_message = gpt_message.replace('\n', '<br>')
+      except:
+        gpt_message = 'Sorry, GPT could not generate a response at the moment. Please try again.'
       async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -90,13 +93,16 @@ class VideoChatConsumer(WebsocketConsumer):
             }
           )
     elif data['action'] == 'DALLE' and self.room_group_name == data['for_group']:
-      response = openai.Image.create(
-            prompt=data['prompt'],
-            n=1,
-            size='256x256'
-          )
-      img_url = response['data'][0]['url']
-      img_tag = f'<img src="{img_url}" alt="Generated Image">'
+      try:
+        response = openai.Image.create(
+              prompt=data['prompt'],
+              n=1,
+              size='256x256'
+            )
+        img_url = response['data'][0]['url']
+        img_tag = f'<img src="{img_url}" alt="Generated Image">'
+      except:
+        img_tag = 'Sorry, this image could not be generated. Please try again.
       async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
