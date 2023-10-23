@@ -79,6 +79,10 @@
                 color: white;
             }
             
+            .message img {
+                width: 50%;
+            }
+            
             #message-form {
                 margin: 20px auto;
             }
@@ -238,6 +242,16 @@
                                         'prompts': prompts
                                     }));
                                 }
+                                    else if(messageInput.value.split(' ')[0] == '!img') {
+                                        let prompt = messageInput.value.split(' ')
+                                        prompt.splice(0, 1);
+                                        prompt = prompt.join(' ');
+                                        ws.send(JSON.stringify({
+                                            'action': 'DALLE',
+                                            'for_group': roomName,
+                                            'prompt': prompt
+                                        }))
+                                    }
                                 messageForm.reset();
                             });
                             role = 'offerer';
@@ -296,6 +310,16 @@
                                             'for_group': roomName,
                                             'prompts': prompts
                                         }));
+                                    }
+                                    else if(messageInput.value.split(' ')[0] == '!img') {
+                                        let prompt = messageInput.value.split(' ')
+                                        prompt.splice(0, 1);
+                                        prompt = prompt.join(' ');
+                                        ws.send(JSON.stringify({
+                                            'action': 'DALLE',
+                                            'for_group': roomName,
+                                            'prompt': prompt
+                                        }))
                                     }
                                     messageForm.reset();
                                 })
