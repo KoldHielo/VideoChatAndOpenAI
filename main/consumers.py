@@ -102,7 +102,7 @@ class VideoChatConsumer(WebsocketConsumer):
         img_url = response['data'][0]['url']
         img_tag = f'<img src="{img_url}" alt="Generated Image">'
       except:
-        img_tag = 'Sorry, this image could not be generated. Please try again.
+        img_tag = 'Sorry, this image could not be generated. Please try again.'
       async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
