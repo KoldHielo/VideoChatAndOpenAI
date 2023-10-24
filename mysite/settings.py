@@ -27,7 +27,8 @@ SECRET_KEY = os.environ['VC_SECRET_KEY']
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    'kieranoldfield.co.uk'
+    'kieranoldfield.co.uk',
+    '16.170.98.35'
 ]
 
 # FORM SUBMISSION
