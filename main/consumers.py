@@ -4,8 +4,10 @@ from asgiref.sync import async_to_sync
 from django.core.cache import cache
 import openai
 import os
+from openai import OpenAI
 
 openai.api_key = os.environ['OPENAI_API_KEY']
+openai_client = OpenAI()
 
 class VideoChatConsumer(WebsocketConsumer):
   def connect(self):
@@ -77,7 +79,7 @@ class VideoChatConsumer(WebsocketConsumer):
         messages.append({'role': role, 'content': content})
 
       try:
-        response = openai.ChatCompletion.create(
+        response = openai_client.chat.completions.create(
               model='gpt-3.5-turbo',
               messages=messages
             )
@@ -94,7 +96,8 @@ class VideoChatConsumer(WebsocketConsumer):
           )
     elif data['action'] == 'DALLE' and self.room_group_name == data['for_group']:
       try:
-        response = openai.Image.create(
+        response = openai_client.images.generate(
+              model='dall-e-3',
               prompt=data['prompt'],
               n=1,
               size='256x256'
