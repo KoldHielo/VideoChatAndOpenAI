@@ -2,11 +2,9 @@ import json
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 from django.core.cache import cache
-import openai
 import os
 from openai import OpenAI
 
-openai.api_key = os.environ['OPENAI_API_KEY']
 openai_client = OpenAI()
 
 class VideoChatConsumer(WebsocketConsumer):
@@ -83,9 +81,10 @@ class VideoChatConsumer(WebsocketConsumer):
               model='gpt-3.5-turbo',
               messages=messages
             )
-        gpt_message = response['choices'][0]['message']['content']
+        gpt_message = response.choices[0].message.content
         gpt_message = gpt_message.replace('\n', '<br>')
-      except:
+      except Exception as e:
+        print(e)
         gpt_message = 'Sorry, GPT could not generate a response at the moment. Please try again.'
       async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
@@ -100,11 +99,12 @@ class VideoChatConsumer(WebsocketConsumer):
               model='dall-e-3',
               prompt=data['prompt'],
               n=1,
-              size='256x256'
+              size='1024x1024'
             )
-        img_url = response['data'][0]['url']
+        img_url = response.data[0].url
         img_tag = f'<img src="{img_url}" alt="Generated Image">'
-      except:
+      except Exception as e:
+        print(e)
         img_tag = 'Sorry, this image could not be generated. Please try again.'
       async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
