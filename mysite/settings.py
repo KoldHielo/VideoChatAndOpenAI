@@ -27,13 +27,13 @@ SECRET_KEY = os.environ['VC_SECRET_KEY']
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    'kieranoldfield.co.uk',
+    'dev.kowd.uk',
 ]
 
 # FORM SUBMISSION
 # Comment out the following line and place your railway URL, and your production URL in the array.
 CSRF_TRUSTED_ORIGINS = [
-    'https://kieranoldfield.co.uk'
+    'https://dev.kowd.uk'
 ]
 
 # Application definition
@@ -41,7 +41,6 @@ CSRF_TRUSTED_ORIGINS = [
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 INSTALLED_APPS = [
-    'daphne',
     'main',
     'django.contrib.admin',
     'django.contrib.auth',
